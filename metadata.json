@@ -1,0 +1,8 @@
+{
+  "name": "Đấu Trường Sử Việt",
+  "description": "Ứng dụng học Lịch sử Việt Nam (lớp 11 & 12) theo phong cách gamify đối kháng, bản đồ tương tác, trò chuyện với tiền nhân bằng AI, kèm hệ thống hồ sơ, uy tín và tố cáo.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}

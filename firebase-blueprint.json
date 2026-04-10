@@ -1,0 +1,58 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile and role information.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth UID" },
+        "email": { "type": "string", "format": "email" },
+        "name": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "user"] }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "Evidence": {
+      "title": "Evidence",
+      "description": "Evidence files (images/videos) for reports.",
+      "type": "object",
+      "properties": {
+        "reportId": { "type": "string" },
+        "url": { "type": "string" },
+        "type": { "type": "string", "enum": ["image", "video"] },
+        "createdAt": { "type": "string", "format": "date" }
+      },
+      "required": ["reportId", "url", "type", "createdAt"]
+    },
+    "GameLog": {
+      "title": "GameLog",
+      "description": "Game logs for monitoring.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "action": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date" },
+        "details": { "type": "string" }
+      },
+      "required": ["userId", "action", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User documents."
+    },
+    "/reports/{reportId}": {
+      "schema": "Report",
+      "description": "Report documents."
+    },
+    "/reports/{reportId}/evidence/{evidenceId}": {
+      "schema": "Evidence",
+      "description": "Evidence for a report."
+    },
+    "/logs/{logId}": {
+      "schema": "GameLog",
+      "description": "Game logs."
+    }
+  }
+}

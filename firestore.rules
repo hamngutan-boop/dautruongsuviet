@@ -1,0 +1,72 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: userId (Auth UID)
+    // Fields:
+    //   - uid: string (required) - Firebase Auth UID
+    //   - email: string (required) - User email
+    //   - name: string (required) - User name
+    //   - role: string (required, 'admin' or 'user') - User role
+    //
+    // Collection: reports
+    // Document ID: reportId (Auto-generated)
+    // Fields:
+    //   - reporterId: string (required) - ID of the user reporting
+    //   - reportedId: string (required) - ID of the reported user
+    //   - reason: string (required) - Reason for report
+    //   - status: string (required, 'pending', 'processed', 'trash') - Status
+    //   - createdAt: string (required) - ISO 8601 date string
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+       return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "hamngutan@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isOwner(userId) {
+       return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) && request.resource.data.role == 'user'; // Users can only create themselves as 'user'
+      allow update: if isAdmin(); // Only admins can change roles
+    }
+
+    match /reports/{reportId} {
+      allow read: if isAdmin();
+      allow create: if isAuthenticated(); // Any user can report
+      allow update: if isAdmin(); // Only admins can process reports
+
+      match /evidence/{evidenceId} {
+        allow read: if isAdmin();
+        allow create: if isAuthenticated(); // Reporters can upload evidence
+      }
+    }
+
+    match /logs/{logId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin(); // Logs are system-generated
+    }
+  }
+}
