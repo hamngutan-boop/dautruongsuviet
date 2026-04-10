@@ -55,6 +55,7 @@ export interface QuizQuestion {
   grade: 10 | 11 | 12;
   category: 'VN' | 'World';
   period: string;
+  century?: number; // Added century field
 }
 
 export interface CharacterQuizQuestion {
@@ -572,7 +573,7 @@ export interface SpeedModeConfig {
 export const RANKS = ['Bạc', 'Vàng', 'Bạch Kim', 'Kim Cương', 'Cao Thủ', 'Thách Đấu'];
 
 export type Difficulty = 'Sơ' | 'Trung' | 'Cao';
-export type GameMode = 'battle' | 'character_battle' | 'epithet_battle' | 'raid' | 'true_false' | 'fill_blank' | 'speed_history' | 'ranked' | 'event_guessing';
+export type GameMode = 'battle' | 'character_battle' | 'epithet_battle' | 'raid' | 'true_false' | 'fill_blank' | 'speed_history' | 'ranked' | 'event_guessing' | 'chronological' | 'dynasty' | 'memory_cards';
 
 export const GENERALS: General[] = [
   {
@@ -790,10 +791,179 @@ export const EVENT_GUESSING_DATA: EventGuessingQuestion[] = [
     options: ['Mỹ ném bom nguyên tử', 'Nhật Bản đầu hàng', 'Trận Trân Châu Cảng', 'Kết thúc chiến tranh Thái Bình Dương'],
     explanation: 'Ngày 6/8/1945, Mỹ ném quả bom nguyên tử đầu tiên xuống Hiroshima, gây ra thiệt hại khủng khiếp và dẫn đến sự đầu hàng của Nhật Bản.',
     category: 'World'
+  },
+  {
+    id: 'eg7',
+    location: 'Hà Tiên',
+    year: 1708,
+    correctAnswer: 'Mạc Cửu dâng đất Hà Tiên',
+    options: ['Mạc Cửu dâng đất Hà Tiên', 'Chúa Nguyễn Ánh chạy trốn Tây Sơn', 'Pháp chiếm Hà Tiên', 'Thành lập tỉnh Kiên Giang'],
+    explanation: 'Năm 1708, Mạc Cửu dâng vùng đất Hà Tiên cho chúa Nguyễn Phúc Chu, được phong làm Tổng binh trấn Hà Tiên.',
+    category: 'VN'
+  },
+  {
+    id: 'eg8',
+    location: 'Trấn Tây Thành (Campuchia)',
+    year: 1835,
+    correctAnswer: 'Vua Minh Mạng lập Trấn Tây Thành',
+    options: ['Vua Minh Mạng lập Trấn Tây Thành', 'Vua Gia Long đánh Xiêm', 'Pháp chiếm Campuchia', 'Chúa Nguyễn mở cõi'],
+    explanation: 'Năm 1835, vua Minh Mạng đổi nước Chân Lạp thành Trấn Tây Thành, sáp nhập vào lãnh thổ Đại Nam.',
+    category: 'VN'
+  },
+  {
+    id: 'eg9',
+    location: 'Trấn Ninh (Lào)',
+    year: 1828,
+    correctAnswer: 'Vua Minh Mạng sáp nhập Trấn Ninh',
+    options: ['Vua Minh Mạng sáp nhập Trấn Ninh', 'Khởi nghĩa chống Pháp', 'Vua Lê Thánh Tông đánh Ai Lao', 'Ký hiệp ước Pháp - Xiêm'],
+    explanation: 'Năm 1828, vua Minh Mạng sáp nhập vùng Trấn Ninh (Lào) vào lãnh thổ Đại Nam.',
+    category: 'VN'
+  },
+  {
+    id: 'eg10',
+    location: 'Mỏ Vịt (Svay Rieng)',
+    year: 'Thế kỷ XIX',
+    correctAnswer: 'Vùng đất tranh chấp Việt - Xiêm',
+    options: ['Vùng đất tranh chấp Việt - Xiêm', 'Nơi vua Hàm Nghi bị bắt', 'Căn cứ của Trương Định', 'Trận đánh lớn thời Tây Sơn'],
+    explanation: 'Mỏ Vịt (Svay Rieng) là vùng đất có hình dáng giống mỏ vịt, từng là nơi tranh chấp quyết liệt giữa Đại Nam và Xiêm La thời nhà Nguyễn.',
+    category: 'VN'
+  },
+  {
+    id: 'eg11',
+    location: 'Thăng Long',
+    year: 1042,
+    correctAnswer: 'Vua Lý Thái Tông ban hành Hình thư',
+    options: ['Vua Lý Thái Tông ban hành Hình thư', 'Dời đô về Thăng Long', 'Xây dựng Quốc Tử Giám', 'Đánh bại quân Tống'],
+    explanation: 'Năm 1042, vua Lý Thái Tông ban hành bộ Hình thư, đây là bộ luật thành văn đầu tiên của nước ta.',
+    category: 'VN'
+  },
+  {
+    id: 'eg12',
+    location: 'Thăng Long',
+    year: 1483,
+    correctAnswer: 'Ban hành Quốc triều hình luật',
+    options: ['Ban hành Quốc triều hình luật', 'Khởi nghĩa Lam Sơn thắng lợi', 'Lê Lợi lên ngôi vua', 'Đánh bại quân Minh'],
+    explanation: 'Năm 1483, vua Lê Thánh Tông ban hành bộ Quốc triều hình luật (Luật Hồng Đức), bộ luật hoàn thiện nhất thời phong kiến Việt Nam.',
+    category: 'VN'
+  },
+  {
+    id: 'eg13',
+    location: 'Phú Xuân (Huế)',
+    year: 1815,
+    correctAnswer: 'Ban hành Hoàng Việt luật lệ',
+    options: ['Ban hành Hoàng Việt luật lệ', 'Nguyễn Ánh lên ngôi Hoàng đế', 'Pháp tấn công Đà Nẵng', 'Ký hiệp ước Nhâm Tuất'],
+    explanation: 'Năm 1815, vua Gia Long ban hành bộ Hoàng Việt luật lệ (Luật Gia Long), bộ luật chính thức của triều Nguyễn.',
+    category: 'VN'
+  },
+  {
+    id: 'eg14',
+    location: 'Sông Như Nguyệt',
+    year: 1077,
+    correctAnswer: 'Lý Thường Kiệt đánh bại quân Tống',
+    options: ['Lý Thường Kiệt đánh bại quân Tống', 'Ngô Quyền đánh quân Nam Hán', 'Trần Hưng Đạo đánh quân Nguyên', 'Lê Hoàn đánh quân Tống'],
+    explanation: 'Năm 1077, quân đội nhà Lý dưới sự chỉ huy của Lý Thường Kiệt đã đánh bại quân Tống trên sông Như Nguyệt.',
+    category: 'VN'
+  },
+  {
+    id: 'eg15',
+    location: 'Chi Lăng',
+    year: 1427,
+    correctAnswer: 'Nghĩa quân Lam Sơn chém Liễu Thăng',
+    options: ['Nghĩa quân Lam Sơn chém Liễu Thăng', 'Trần Hưng Đạo đánh quân Nguyên', 'Lý Thường Kiệt đánh quân Tống', 'Quang Trung đại phá quân Thanh'],
+    explanation: 'Năm 1427, nghĩa quân Lam Sơn phục kích và chém chết tướng giặc Liễu Thăng tại ải Chi Lăng, đập tan đạo viện binh của quân Minh.',
+    category: 'VN'
   }
 ];
 
 export const QUIZ_DATA: QuizQuestion[] = [
+  {
+    id: 'loc_1',
+    question: 'Vùng đất Hà Tiên được sáp nhập vào lãnh thổ Đại Việt dưới thời chúa Nguyễn nào?',
+    options: ['Nguyễn Hoàng', 'Nguyễn Phúc Chu', 'Nguyễn Phúc Khoát', 'Nguyễn Ánh'],
+    correctAnswer: 1,
+    explanation: 'Năm 1708, Mạc Cửu dâng vùng đất Hà Tiên cho chúa Nguyễn Phúc Chu và được phong làm Tổng binh trấn Hà Tiên.',
+    hint: 'Vị chúa Nguyễn thứ 6.',
+    grade: 10,
+    category: 'VN',
+    period: 'Trung đại'
+  },
+  {
+    id: 'loc_2',
+    question: 'Trấn Tây Thành là tên gọi của vùng đất nào khi được sáp nhập vào Đại Nam dưới thời vua Minh Mạng?',
+    options: ['Chân Lạp (Campuchia)', 'Ai Lao (Lào)', 'Chiêm Thành', 'Thủy Chân Lạp'],
+    correctAnswer: 0,
+    explanation: 'Năm 1835, vua Minh Mạng đổi nước Chân Lạp thành Trấn Tây Thành, sáp nhập trực tiếp vào lãnh thổ Đại Nam.',
+    hint: 'Quốc gia láng giềng phía Tây Nam.',
+    grade: 10,
+    category: 'VN',
+    period: 'Trung đại'
+  },
+  {
+    id: 'loc_3',
+    question: 'Vùng Trấn Ninh được sáp nhập vào lãnh thổ Đại Nam dưới thời vua nào?',
+    options: ['Gia Long', 'Minh Mạng', 'Thiệu Trị', 'Tự Đức'],
+    correctAnswer: 1,
+    explanation: 'Năm 1828, vua Minh Mạng sáp nhập vùng Trấn Ninh (nay thuộc Xiêng Khoảng, Lào) vào lãnh thổ Đại Nam.',
+    hint: 'Vị vua có nhiều cải cách hành chính nhất triều Nguyễn.',
+    grade: 10,
+    category: 'VN',
+    period: 'Trung đại'
+  },
+  {
+    id: 'loc_4',
+    question: 'Khu vực "Mỏ Vịt" (Svay Rieng) từng là nơi tranh chấp quyết liệt giữa Đại Nam và quốc gia nào?',
+    options: ['Chân Lạp', 'Xiêm La (Thái Lan)', 'Đế quốc Anh', 'Thực dân Pháp'],
+    correctAnswer: 1,
+    explanation: 'Vùng Mỏ Vịt là địa bàn chiến lược quan trọng, từng xảy ra nhiều cuộc giao tranh giữa quân đội Đại Nam và Xiêm La trong thế kỷ XIX.',
+    hint: 'Quốc gia láng giềng phía Tây.',
+    grade: 10,
+    category: 'VN',
+    period: 'Trung đại'
+  },
+  {
+    id: 'law_1',
+    question: 'Điểm tiến bộ nổi bật nhất của bộ Quốc triều hình luật (Luật Hồng Đức) thời Lê sơ so với các bộ luật phong kiến khác là gì?',
+    options: ['Bảo vệ quyền lợi tuyệt đối của nhà vua', 'Bảo vệ quyền lợi của phụ nữ và quyền thừa kế', 'Quy định hình phạt rất nghiêm khắc', 'Chỉ áp dụng cho quan lại'],
+    correctAnswer: 1,
+    explanation: 'Luật Hồng Đức có những điều khoản tiến bộ bảo vệ quyền lợi của người phụ nữ, cho phép họ có quyền thừa kế tài sản và chia tài sản khi ly hôn.',
+    hint: 'Liên quan đến một nửa thế giới.',
+    grade: 10,
+    category: 'VN',
+    period: 'Trung đại'
+  },
+  {
+    id: 'law_2',
+    question: 'Bộ Hoàng Việt luật lệ (Luật Gia Long) thời Nguyễn chịu ảnh hưởng đậm nét của bộ luật nào?',
+    options: ['Luật Hồng Đức', 'Luật nhà Minh', 'Luật nhà Thanh', 'Luật nhà Đường'],
+    correctAnswer: 2,
+    explanation: 'Hoàng Việt luật lệ được biên soạn dựa trên cơ sở tham khảo và sao chép nhiều điều khoản từ Đại Thanh luật lệ.',
+    hint: 'Triều đại phong kiến cuối cùng của Trung Quốc.',
+    grade: 10,
+    category: 'VN',
+    period: 'Trung đại'
+  },
+  {
+    id: 'law_3',
+    question: 'Bộ luật Hình thư thời Lý có những quy định nghiêm ngặt nhằm bảo vệ đối tượng nào để phát triển nông nghiệp?',
+    options: ['Ruộng đất công', 'Trâu bò', 'Nông dân', 'Hệ thống đê điều'],
+    correctAnswer: 1,
+    explanation: 'Hình thư quy định hình phạt rất nặng đối với tội ăn trộm và giết mổ trâu bò bừa bãi để bảo vệ sức kéo cho nông nghiệp.',
+    hint: 'Con vật là đầu cơ nghiệp.',
+    grade: 10,
+    category: 'VN',
+    period: 'Trung đại'
+  },
+  {
+    id: 'law_4',
+    question: 'Nội dung nào KHÔNG có trong Quốc triều hình luật (Luật Hồng Đức)?',
+    options: ['Bảo vệ chủ quyền quốc gia', 'Khuyến khích phát triển nông nghiệp', 'Xóa bỏ hoàn toàn chế độ nô tì', 'Bảo vệ quyền lợi phụ nữ'],
+    correctAnswer: 2,
+    explanation: 'Luật Hồng Đức tuy tiến bộ nhưng vẫn là luật phong kiến, vẫn duy trì chế độ nô tì và phân biệt đẳng cấp.',
+    hint: 'Một chế độ bóc lột sức lao động.',
+    grade: 10,
+    category: 'VN',
+    period: 'Trung đại'
+  },
   {
     id: 'q0_1',
     question: 'Dấu tích của Người tối cổ ở Việt Nam được tìm thấy sớm nhất tại đâu?',
@@ -847,7 +1017,8 @@ export const QUIZ_DATA: QuizQuestion[] = [
     hint: 'Ông là người lập ra nhà Hậu Lê.',
     grade: 11,
     category: 'VN',
-    period: 'Trung đại'
+    period: 'Trung đại',
+    century: 15
   },
   {
     id: 'q2',
@@ -858,7 +1029,8 @@ export const QUIZ_DATA: QuizQuestion[] = [
     hint: 'Sự kiện lừng lẫy năm châu, chấn động địa cầu năm 1954.',
     grade: 12,
     category: 'VN',
-    period: 'Hiện đại'
+    period: 'Hiện đại',
+    century: 20
   },
   {
     id: 'q3',
@@ -869,7 +1041,8 @@ export const QUIZ_DATA: QuizQuestion[] = [
     hint: 'Ông là người sáng lập ra vương triều nhà Lý.',
     grade: 11,
     category: 'VN',
-    period: 'Trung đại'
+    period: 'Trung đại',
+    century: 11
   },
   {
     id: 'q4',
@@ -891,7 +1064,8 @@ export const QUIZ_DATA: QuizQuestion[] = [
     hint: 'Quốc gia được mệnh danh là "Xứ sở sương mù".',
     grade: 11,
     category: 'World',
-    period: 'Cận đại'
+    period: 'Cận đại',
+    century: 18
   },
   {
     id: 'q6',
@@ -902,7 +1076,8 @@ export const QUIZ_DATA: QuizQuestion[] = [
     hint: 'Sự kiện diễn ra vào tháng 5 năm 1945.',
     grade: 12,
     category: 'World',
-    period: 'Hiện đại'
+    period: 'Hiện đại',
+    century: 20
   },
   {
     id: 'q7',
@@ -913,7 +1088,8 @@ export const QUIZ_DATA: QuizQuestion[] = [
     hint: 'Một nhà thám hiểm người Ý phục vụ cho triều đình Tây Ban Nha.',
     grade: 11,
     category: 'World',
-    period: 'Trung đại'
+    period: 'Trung đại',
+    century: 15
   },
   {
     id: 'q8',
@@ -935,7 +1111,8 @@ export const QUIZ_DATA: QuizQuestion[] = [
     hint: 'Ông là người kết thúc hơn 1000 năm Bắc thuộc.',
     grade: 11,
     category: 'VN',
-    period: 'Trung đại'
+    period: 'Trung đại',
+    century: 10
   },
   {
     id: 'q10',
@@ -957,7 +1134,8 @@ export const QUIZ_DATA: QuizQuestion[] = [
     hint: 'Chiến dịch mang tên vị lãnh tụ vĩ đại của dân tộc.',
     grade: 12,
     category: 'VN',
-    period: 'Hiện đại'
+    period: 'Hiện đại',
+    century: 20
   },
   {
     id: 'q12',
@@ -990,7 +1168,8 @@ export const QUIZ_DATA: QuizQuestion[] = [
     hint: 'Sự kiện liên quan đến vua Hàm Nghi và Tôn Thất Thuyết.',
     grade: 11,
     category: 'VN',
-    period: 'Cận đại'
+    period: 'Cận đại',
+    century: 19
   },
   {
     id: 'q15',
@@ -1012,7 +1191,8 @@ export const QUIZ_DATA: QuizQuestion[] = [
     hint: 'Vị lãnh tụ vĩ đại của giai cấp vô sản thế giới.',
     grade: 12,
     category: 'World',
-    period: 'Hiện đại'
+    period: 'Hiện đại',
+    century: 20
   },
   {
     id: 'q17',
@@ -1067,7 +1247,8 @@ export const QUIZ_DATA: QuizQuestion[] = [
     hint: 'Cuộc tấn công vào biểu tượng của chế độ phong kiến chuyên chế Pháp.',
     grade: 11,
     category: 'World',
-    period: 'Cận đại'
+    period: 'Cận đại',
+    century: 18
   },
   {
     id: 'q22',
@@ -1122,7 +1303,8 @@ export const QUIZ_DATA: QuizQuestion[] = [
     hint: 'Quân xâm lược đến từ phương Nam (Thái Lan ngày nay).',
     grade: 11,
     category: 'VN',
-    period: 'Trung đại'
+    period: 'Trung đại',
+    century: 18
   },
   {
     id: 'q27',
@@ -1155,7 +1337,8 @@ export const QUIZ_DATA: QuizQuestion[] = [
     hint: 'Tinh thần "Sát Thát" của quân dân nhà Trần.',
     grade: 11,
     category: 'VN',
-    period: 'Trung đại'
+    period: 'Trung đại',
+    century: 13
   },
   {
     id: 'q30',
@@ -1199,7 +1382,8 @@ export const QUIZ_DATA: QuizQuestion[] = [
     hint: 'Ông được gọi là Vạn Thắng Vương.',
     grade: 11,
     category: 'VN',
-    period: 'Trung đại'
+    period: 'Trung đại',
+    century: 10
   },
   {
     id: 'q34',
@@ -1210,7 +1394,8 @@ export const QUIZ_DATA: QuizQuestion[] = [
     hint: 'Vị vua lập ra nhà Hồ.',
     grade: 11,
     category: 'VN',
-    period: 'Trung đại'
+    period: 'Trung đại',
+    century: 14
   },
   {
     id: 'q35',
@@ -1221,7 +1406,8 @@ export const QUIZ_DATA: QuizQuestion[] = [
     hint: 'Một con sông thuộc tỉnh Quảng Bình.',
     grade: 11,
     category: 'VN',
-    period: 'Trung đại'
+    period: 'Trung đại',
+    century: 17
   },
   {
     id: 'q36',
@@ -1298,7 +1484,8 @@ export const QUIZ_DATA: QuizQuestion[] = [
     hint: 'Vị khả hãn vĩ đại của thảo nguyên.',
     grade: 11,
     category: 'World',
-    period: 'Trung đại'
+    period: 'Trung đại',
+    century: 13
   },
   {
     id: 'q43',
@@ -1309,7 +1496,8 @@ export const QUIZ_DATA: QuizQuestion[] = [
     hint: 'Quốc gia có hình chiếc ủng trên bản đồ.',
     grade: 11,
     category: 'World',
-    period: 'Trung đại'
+    period: 'Trung đại',
+    century: 14
   },
   {
     id: 'q44',
@@ -1320,7 +1508,8 @@ export const QUIZ_DATA: QuizQuestion[] = [
     hint: 'Cuộc đấu tranh chống lại ách thống trị của Tây Ban Nha.',
     grade: 11,
     category: 'World',
-    period: 'Cận đại'
+    period: 'Cận đại',
+    century: 16
   },
   {
     id: 'q45',
@@ -1408,7 +1597,8 @@ export const QUIZ_DATA: QuizQuestion[] = [
     hint: 'Vị vua thứ ba của nhà Lý.',
     grade: 11,
     category: 'VN',
-    period: 'Trung đại'
+    period: 'Trung đại',
+    century: 11
   },
   {
     id: 'q53',
@@ -1496,7 +1686,8 @@ export const QUIZ_DATA: QuizQuestion[] = [
     hint: 'Vị tướng lãnh đạo cuộc kháng chiến chống Tống thời Lý.',
     grade: 11,
     category: 'VN',
-    period: 'Trung đại'
+    period: 'Trung đại',
+    century: 11
   },
   {
     id: 'q61',
@@ -2283,6 +2474,61 @@ export const QUIZ_DATA: QuizQuestion[] = [
     grade: 12,
     category: 'World',
     period: 'Hiện đại'
+  },
+  {
+    id: 'q16',
+    question: 'Ai là người phát minh ra máy hơi nước đầu tiên có tính ứng dụng cao?',
+    options: ['James Watt', 'Thomas Edison', 'Isaac Newton', 'Albert Einstein'],
+    correctAnswer: 0,
+    explanation: 'James Watt đã cải tiến máy hơi nước của Newcomen, tạo ra động cơ hơi nước hiệu quả, thúc đẩy Cách mạng Công nghiệp.',
+    hint: 'Tên ông được dùng làm đơn vị đo công suất điện.',
+    grade: 11,
+    category: 'World',
+    period: 'Cận đại'
+  },
+  {
+    id: 'q17',
+    question: 'Sự kiện nào châm ngòi cho Chiến tranh thế giới thứ nhất?',
+    options: ['Vụ ám sát Thái tử Áo-Hung', 'Đức xâm lược Ba Lan', 'Trận Trân Châu Cảng', 'Cách mạng tháng Mười Nga'],
+    correctAnswer: 0,
+    explanation: 'Vụ ám sát Thái tử Franz Ferdinand của Áo-Hung tại Sarajevo năm 1914 là nguyên nhân trực tiếp dẫn đến Thế chiến I.',
+    hint: 'Một vụ ám sát tại Sarajevo.',
+    grade: 11,
+    category: 'World',
+    period: 'Cận đại'
+  },
+  {
+    id: 'q18',
+    question: 'Vạn Lý Trường Thành của Trung Quốc được xây dựng chủ yếu để chống lại sự xâm lược của ai?',
+    options: ['Quân Hung Nô', 'Quân Nhật Bản', 'Quân La Mã', 'Quân Ba Tư'],
+    correctAnswer: 0,
+    explanation: 'Vạn Lý Trường Thành được xây dựng để bảo vệ Trung Quốc khỏi các cuộc tấn công của các bộ lạc du mục phương Bắc, chủ yếu là Hung Nô.',
+    hint: 'Các bộ lạc du mục phương Bắc.',
+    grade: 11,
+    category: 'World',
+    period: 'Cổ đại'
+  },
+  {
+    id: 'q19',
+    question: 'Ai là tác giả của bản Tuyên ngôn Độc lập của nước Mỹ năm 1776?',
+    options: ['Thomas Jefferson', 'George Washington', 'Abraham Lincoln', 'Benjamin Franklin'],
+    correctAnswer: 0,
+    explanation: 'Thomas Jefferson là người soạn thảo chính bản Tuyên ngôn Độc lập của Hoa Kỳ.',
+    hint: 'Tổng thống thứ 3 của Hoa Kỳ.',
+    grade: 11,
+    category: 'World',
+    period: 'Cận đại'
+  },
+  {
+    id: 'q20',
+    question: 'Trận thủy chiến nào nổi tiếng nhất trong lịch sử chống quân Nguyên Mông của nhà Trần?',
+    options: ['Trận Bạch Đằng (1288)', 'Trận Chương Dương', 'Trận Hàm Tử', 'Trận Vạn Kiếp'],
+    correctAnswer: 0,
+    explanation: 'Trận Bạch Đằng năm 1288 là trận thủy chiến quyết định tiêu diệt hoàn toàn đạo quân thủy của nhà Nguyên.',
+    hint: 'Sử dụng cọc gỗ trên sông.',
+    grade: 11,
+    category: 'VN',
+    period: 'Trung đại'
   }
 ];
 
@@ -2636,6 +2882,26 @@ export const CHARACTER_QUIZ_DATA: CharacterQuizQuestion[] = [
     explanation: 'Bác Hồ luôn dành sự quan tâm đặc biệt và đặt niềm tin lớn lao vào thế hệ trẻ.',
     hint: 'Người sáng lập tổ chức Thanh niên Cách mạng Đồng chí Hội.',
     category: 'VN'
+  },
+  {
+    id: 'cq36',
+    quote: '"Bao giờ người Tây nhổ hết cỏ nước Nam thì mới hết người Nam đánh Tây."',
+    description: 'Câu nói khẳng định ý chí kiên cường, bất khuất chống giặc ngoại xâm của nhân dân ta.',
+    correctAnswer: 'Nguyễn Trung Trực',
+    options: ['Nguyễn Trung Trực', 'Trương Định', 'Thủ Khoa Huân', 'Thi Thiên Hộ Dương'],
+    explanation: 'Đây là câu nói nổi tiếng của Nguyễn Trung Trực trước khi bị thực dân Pháp hành hình.',
+    hint: 'Người đốt cháy tàu Hy Vọng của Pháp trên sông Vàm Cỏ Đông.',
+    category: 'VN'
+  },
+  {
+    id: 'cq37',
+    quote: '"Ta thà làm ma nước Nam, chứ không thèm làm vương đất Bắc."',
+    description: 'Câu nói thể hiện khí tiết anh hùng, thà chết vinh còn hơn sống nhục.',
+    correctAnswer: 'Trần Bình Trọng',
+    options: ['Trần Bình Trọng', 'Trần Quốc Toản', 'Trần Hưng Đạo', 'Phạm Ngũ Lão'],
+    explanation: 'Trần Bình Trọng đã khảng khái trả lời tướng giặc Nguyên Mông khi bị bắt và dụ dỗ đầu hàng.',
+    hint: 'Vị tướng hy sinh anh dũng trong cuộc kháng chiến chống Nguyên Mông lần 2.',
+    category: 'VN'
   }
 ];
 
@@ -2774,6 +3040,33 @@ export const EPITHET_QUIZ_DATA: EpithetQuizQuestion[] = [
     explanation: 'Lê Văn Duyệt là một trong ngũ hổ tướng của nhà Nguyễn, giữ chức Tả quân Tổng trấn Gia Định thành.',
     hint: 'Vị tướng có công lớn in việc phát triển vùng đất Gia Định.',
     category: 'VN'
+  },
+  {
+    id: 'eq16',
+    epithet: 'Trạng Trình',
+    correctAnswer: 'Nguyễn Bỉnh Khiêm',
+    options: ['Nguyễn Bỉnh Khiêm', 'Lương Thế Vinh', 'Mạc Đĩnh Chi', 'Nguyễn Hiền'],
+    explanation: 'Nguyễn Bỉnh Khiêm được phong tước Trình Quốc Công, nên dân gian gọi là Trạng Trình.',
+    hint: 'Nhà tiên tri nổi tiếng của Việt Nam.',
+    category: 'VN'
+  },
+  {
+    id: 'eq17',
+    epithet: 'Bố Cái Đại Vương',
+    correctAnswer: 'Phùng Hưng',
+    options: ['Phùng Hưng', 'Mai Thúc Loan', 'Lý Bí', 'Khúc Thừa Dụ'],
+    explanation: 'Phùng Hưng lãnh đạo khởi nghĩa chống nhà Đường, sau khi mất được nhân dân suy tôn là Bố Cái Đại Vương.',
+    hint: 'Vị vua xuất thân từ Đường Lâm.',
+    category: 'VN'
+  },
+  {
+    id: 'eq18',
+    epithet: 'Dạ Trạch Vương',
+    correctAnswer: 'Triệu Quang Phục',
+    options: ['Triệu Quang Phục', 'Lý Nam Đế', 'Lý Phật Tử', 'Mai Hắc Đế'],
+    explanation: 'Triệu Quang Phục xây dựng căn cứ ở đầm Dạ Trạch chống quân Lương, được gọi là Dạ Trạch Vương.',
+    hint: 'Người kế tục sự nghiệp của Lý Nam Đế.',
+    category: 'VN'
   }
 ];
 
@@ -2799,6 +3092,80 @@ export const CHRONOLOGICAL_DATA: ChronologicalQuestion[] = [
     ],
     explanation: 'Thứ tự đúng: Hai Bà Trưng (40) -> Bà Triệu (248) -> Lý Bí (542) -> Mai Thúc Loan (713).',
     category: 'VN'
+  },
+  {
+    id: 'chron3',
+    events: [
+      { id: 'e1', text: 'Ban hành bộ Hình thư', year: 1042 },
+      { id: 'e2', text: 'Ban hành Quốc triều hình luật', year: 1483 },
+      { id: 'e3', text: 'Ban hành Hoàng Việt luật lệ', year: 1815 }
+    ],
+    explanation: 'Thứ tự đúng: Hình thư (1042, nhà Lý) -> Quốc triều hình luật (1483, nhà Lê) -> Hoàng Việt luật lệ (1815, nhà Nguyễn).',
+    category: 'VN'
+  },
+  {
+    id: 'chron4',
+    events: [
+      { id: 'e1', text: 'Nhà Ngô thành lập', year: 939 },
+      { id: 'e2', text: 'Nhà Đinh thành lập', year: 968 },
+      { id: 'e3', text: 'Nhà Tiền Lê thành lập', year: 980 },
+      { id: 'e4', text: 'Nhà Lý thành lập', year: 1009 }
+    ],
+    explanation: 'Thứ tự đúng: Nhà Ngô (939) -> Nhà Đinh (968) -> Nhà Tiền Lê (980) -> Nhà Lý (1009).',
+    category: 'VN'
+  },
+  {
+    id: 'chron5',
+    events: [
+      { id: 'e1', text: 'Kháng chiến chống Mông Cổ lần 1', year: 1258 },
+      { id: 'e2', text: 'Kháng chiến chống Nguyên lần 2', year: 1285 },
+      { id: 'e3', text: 'Kháng chiến chống Nguyên lần 3', year: 1288 }
+    ],
+    explanation: 'Thứ tự đúng: Lần 1 (1258) -> Lần 2 (1285) -> Lần 3 (1287-1288).',
+    category: 'VN'
+  },
+  {
+    id: 'chron6',
+    events: [
+      { id: 'e1', text: 'Cách mạng tư sản Anh', year: 1640 },
+      { id: 'e2', text: 'Cách mạng tư sản Pháp', year: 1789 },
+      { id: 'e3', text: 'Cách mạng tháng Mười Nga', year: 1917 }
+    ],
+    explanation: 'Thứ tự đúng: Cách mạng tư sản Anh (1640) -> Cách mạng tư sản Pháp (1789) -> Cách mạng tháng Mười Nga (1917).',
+    category: 'World'
+  },
+  {
+    id: 'chron7',
+    events: [
+      { id: 'e1', text: 'Thuận Hóa sáp nhập vào Đại Việt', year: 1306 },
+      { id: 'e2', text: 'Lập phủ Phú Yên', year: 1611 },
+      { id: 'e3', text: 'Mạc Cửu dâng đất Hà Tiên', year: 1708 },
+      { id: 'e4', text: 'Lập Trấn Tây Thành', year: 1835 }
+    ],
+    explanation: 'Thứ tự đúng: Thuận Hóa (1306) -> Phú Yên (1611) -> Hà Tiên (1708) -> Trấn Tây Thành (1835).',
+    category: 'VN'
+  },
+  {
+    id: 'chron8',
+    events: [
+      { id: 'e1', text: 'Pháp đánh chiếm Đà Nẵng', year: 1858 },
+      { id: 'e2', text: 'Hòa ước Nhâm Tuất', year: 1862 },
+      { id: 'e3', text: 'Hòa ước Giáp Tuất', year: 1874 },
+      { id: 'e4', text: 'Hòa ước Patenôtre', year: 1884 }
+    ],
+    explanation: 'Thứ tự đúng: Pháp đánh Đà Nẵng (1858) -> Nhâm Tuất (1862) -> Giáp Tuất (1874) -> Patenôtre (1884).',
+    category: 'VN'
+  },
+  {
+    id: 'chron9',
+    events: [
+      { id: 'e1', text: 'Chiến tranh thế giới thứ nhất bắt đầu', year: 1914 },
+      { id: 'e2', text: 'Cách mạng tháng Mười Nga', year: 1917 },
+      { id: 'e3', text: 'Chiến tranh thế giới thứ hai bắt đầu', year: 1939 },
+      { id: 'e4', text: 'Thành lập Liên Hợp Quốc', year: 1945 }
+    ],
+    explanation: 'Thứ tự đúng: WWI (1914) -> Cách mạng Nga (1917) -> WWII (1939) -> Liên Hợp Quốc (1945).',
+    category: 'World'
   }
 ];
 
@@ -2825,6 +3192,118 @@ export const DYNASTY_DATA: DynastyQuestion[] = [
     correctDynasty: 'Nhà Hậu Lê',
     options: ['Nhà Lý', 'Nhà Trần', 'Nhà Hậu Lê', 'Nhà Nguyễn'],
     explanation: 'Nguyễn Trãi là công thần khai quốc nhà Hậu Lê.',
+    category: 'VN'
+  },
+  {
+    id: 'dyn4',
+    subject: 'Bộ luật Hình thư',
+    correctDynasty: 'Nhà Lý',
+    options: ['Nhà Lý', 'Nhà Trần', 'Nhà Hậu Lê', 'Nhà Nguyễn'],
+    explanation: 'Hình thư là bộ luật thành văn đầu tiên của nước ta, được ban hành dưới thời vua Lý Thái Tông (1042).',
+    category: 'VN'
+  },
+  {
+    id: 'dyn5',
+    subject: 'Quốc triều hình luật (Luật Hồng Đức)',
+    correctDynasty: 'Nhà Hậu Lê',
+    options: ['Nhà Lý', 'Nhà Trần', 'Nhà Hậu Lê', 'Nhà Nguyễn'],
+    explanation: 'Quốc triều hình luật được ban hành dưới thời vua Lê Thánh Tông, là bộ luật hoàn thiện nhất thời phong kiến.',
+    category: 'VN'
+  },
+  {
+    id: 'dyn6',
+    subject: 'Hoàng Việt luật lệ (Luật Gia Long)',
+    correctDynasty: 'Nhà Nguyễn',
+    options: ['Nhà Lý', 'Nhà Trần', 'Nhà Tây Sơn', 'Nhà Nguyễn'],
+    explanation: 'Hoàng Việt luật lệ được ban hành dưới thời vua Gia Long (1815), là bộ luật chính thức của triều Nguyễn.',
+    category: 'VN'
+  },
+  {
+    id: 'dyn7',
+    subject: 'Trấn Tây Thành',
+    correctDynasty: 'Nhà Nguyễn',
+    options: ['Nhà Lý', 'Nhà Trần', 'Nhà Hậu Lê', 'Nhà Nguyễn'],
+    explanation: 'Trấn Tây Thành (Campuchia ngày nay) được vua Minh Mạng sáp nhập vào lãnh thổ Đại Nam năm 1835.',
+    category: 'VN'
+  },
+  {
+    id: 'dyn8',
+    subject: 'Trấn Ninh',
+    correctDynasty: 'Nhà Nguyễn',
+    options: ['Nhà Lý', 'Nhà Trần', 'Nhà Hậu Lê', 'Nhà Nguyễn'],
+    explanation: 'Trấn Ninh (thuộc Lào ngày nay) được vua Minh Mạng sáp nhập vào lãnh thổ Đại Nam năm 1828.',
+    category: 'VN'
+  },
+  {
+    id: 'dyn9',
+    subject: 'Mạc Cửu dâng đất Hà Tiên',
+    correctDynasty: 'Chúa Nguyễn',
+    options: ['Chúa Trịnh', 'Chúa Nguyễn', 'Nhà Tây Sơn', 'Nhà Nguyễn'],
+    explanation: 'Năm 1708, Mạc Cửu dâng vùng đất Hà Tiên cho chúa Nguyễn Phúc Chu.',
+    category: 'VN'
+  },
+  {
+    id: 'dyn10',
+    subject: 'Đánh bại quân Nam Hán trên sông Bạch Đằng',
+    correctDynasty: 'Nhà Ngô',
+    options: ['Nhà Ngô', 'Nhà Đinh', 'Nhà Tiền Lê', 'Nhà Lý'],
+    explanation: 'Ngô Quyền đánh bại quân Nam Hán năm 938, sau đó lên ngôi vua, lập ra nhà Ngô.',
+    category: 'VN'
+  },
+  {
+    id: 'dyn11',
+    subject: 'Hội nghị Diên Hồng',
+    correctDynasty: 'Nhà Trần',
+    options: ['Nhà Lý', 'Nhà Trần', 'Nhà Hồ', 'Nhà Hậu Lê'],
+    explanation: 'Hội nghị Diên Hồng do vua Trần Thánh Tông triệu tập năm 1284 để bàn kế sách chống quân Nguyên.',
+    category: 'VN'
+  },
+  {
+    id: 'dyn12',
+    subject: 'Phát hành tiền giấy Thông bảo hội sao',
+    correctDynasty: 'Nhà Hồ',
+    options: ['Nhà Trần', 'Nhà Hồ', 'Nhà Hậu Lê', 'Nhà Mạc'],
+    explanation: 'Năm 1396, Hồ Quý Ly (khi đó là quyền thần nhà Trần, sau lập nhà Hồ) cho phát hành tiền giấy Thông bảo hội sao.',
+    category: 'VN'
+  },
+  {
+    id: 'dyn13',
+    subject: 'Khởi nghĩa Lam Sơn',
+    correctDynasty: 'Nhà Hậu Lê',
+    options: ['Nhà Trần', 'Nhà Hồ', 'Nhà Hậu Lê', 'Nhà Nguyễn'],
+    explanation: 'Khởi nghĩa Lam Sơn do Lê Lợi lãnh đạo, sau khi thắng lợi đã lập ra nhà Hậu Lê.',
+    category: 'VN'
+  },
+  {
+    id: 'dyn14',
+    subject: 'Phong trào Tây Sơn',
+    correctDynasty: 'Nhà Tây Sơn',
+    options: ['Chúa Nguyễn', 'Nhà Tây Sơn', 'Nhà Nguyễn', 'Nhà Mạc'],
+    explanation: 'Phong trào Tây Sơn do ba anh em Nguyễn Nhạc, Nguyễn Huệ, Nguyễn Lữ lãnh đạo, lật đổ các chính quyền phong kiến và lập ra nhà Tây Sơn.',
+    category: 'VN'
+  },
+  {
+    id: 'dyn15',
+    subject: 'Bộ Quốc triều hình luật (Luật Hồng Đức)',
+    correctDynasty: 'Nhà Hậu Lê',
+    options: ['Nhà Lý', 'Nhà Trần', 'Nhà Hậu Lê', 'Nhà Nguyễn'],
+    explanation: 'Quốc triều hình luật được ban hành dưới thời vua Lê Thánh Tông (nhà Hậu Lê).',
+    category: 'VN'
+  },
+  {
+    id: 'dyn16',
+    subject: 'Bộ Hoàng Việt luật lệ (Luật Gia Long)',
+    correctDynasty: 'Nhà Nguyễn',
+    options: ['Nhà Lý', 'Nhà Trần', 'Nhà Hậu Lê', 'Nhà Nguyễn'],
+    explanation: 'Hoàng Việt luật lệ được ban hành dưới thời vua Gia Long (nhà Nguyễn).',
+    category: 'VN'
+  },
+  {
+    id: 'dyn17',
+    subject: 'Sáp nhập Trấn Ninh, lập Trấn Tây Thành',
+    correctDynasty: 'Nhà Nguyễn',
+    options: ['Nhà Lý', 'Nhà Trần', 'Nhà Hậu Lê', 'Nhà Nguyễn'],
+    explanation: 'Việc sáp nhập Trấn Ninh và lập Trấn Tây Thành diễn ra dưới thời vua Minh Mạng (nhà Nguyễn).',
     category: 'VN'
   }
 ];

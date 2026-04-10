@@ -119,6 +119,37 @@ export const STORY_DATA = {
       name: 'Hiện đại',
       category: 'World',
       description: 'Từ hai cuộc đại chiến thế giới đến kỷ nguyên công nghệ số và hội nhập toàn cầu.'
+    },
+    // Century-based Eras (Combined)
+    {
+      name: 'Thế kỷ X - XI',
+      category: 'Century',
+      description: 'Thời kỳ hình thành các quốc gia độc lập ở Đông Nam Á và sự phát triển của phong kiến châu Âu.'
+    },
+    {
+      name: 'Thế kỷ XII - XIII',
+      category: 'Century',
+      description: 'Đế chế Mông Cổ trỗi dậy, các cuộc thập tự chinh và sự hưng thịnh của nhà Lý, nhà Trần.'
+    },
+    {
+      name: 'Thế kỷ XIV - XV',
+      category: 'Century',
+      description: 'Phong trào Phục hưng, các cuộc đại phát kiến địa lý và khởi nghĩa Lam Sơn.'
+    },
+    {
+      name: 'Thế kỷ XVI - XVII',
+      category: 'Century',
+      description: 'Cải cách tôn giáo, Trịnh - Nguyễn phân tranh và sự mở rộng của các đế quốc thực dân.'
+    },
+    {
+      name: 'Thế kỷ XVIII - XIX',
+      category: 'Century',
+      description: 'Cách mạng công nghiệp, cách mạng Pháp, Mỹ và phong trào Tây Sơn, nhà Nguyễn.'
+    },
+    {
+      name: 'Thế kỷ XX',
+      category: 'Century',
+      description: 'Hai cuộc đại chiến thế giới, phong trào giải phóng dân tộc và kỷ nguyên công nghệ.'
     }
   ]
 };
@@ -141,6 +172,30 @@ export const LEARNING_DOCUMENTS: Record<string, { title: string, content: string
   'Hiện đại': [
     { title: 'Cách mạng tháng Tám', content: 'Dưới sự lãnh đạo của Đảng và Chủ tịch Hồ Chí Minh, nhân dân ta đã vùng lên giành chính quyền, khai sinh ra nước Việt Nam Dân chủ Cộng hòa ngày 2/9/1945.' },
     { title: 'Kỷ nguyên số', content: 'Sự bùng nổ của internet và công nghệ thông tin đã kết nối thế giới, tạo ra những thay đổi chưa từng có trong mọi lĩnh vực của đời sống xã hội.' }
+  ],
+  'Thế kỷ X - XI': [
+    { title: 'Sự hình thành quốc gia độc lập', content: 'Thế kỷ X đánh dấu bước ngoặt vĩ đại với chiến thắng Bạch Đằng (938). Các triều đại Ngô, Đinh, Tiền Lê đã đặt nền móng cho nền độc lập lâu dài. Sang thế kỷ XI, nhà Lý dời đô về Thăng Long, mở ra thời kỳ phát triển rực rỡ.' },
+    { title: 'Phong kiến phương Tây', content: 'Tại châu Âu, hệ thống phong kiến được củng cố. Các vương quốc dần hình thành và phát triển, gắn liền với vai trò của Giáo hội Công giáo.' }
+  ],
+  'Thế kỷ XII - XIII': [
+    { title: 'Hào khí Đông A', content: 'Thời kỳ nhà Trần với 3 lần đại thắng quân Nguyên Mông xâm lược. Tinh thần đoàn kết dân tộc được thể hiện qua Hội nghị Diên Hồng và Hịch Tướng Sĩ.' },
+    { title: 'Đế chế Mông Cổ', content: 'Thành Cát Tư Hãn thống nhất các bộ lạc và thực hiện các cuộc chinh phạt quy mô lớn, tạo nên đế chế lục địa rộng lớn nhất trong lịch sử.' }
+  ],
+  'Thế kỷ XIV - XV': [
+    { title: 'Khởi nghĩa Lam Sơn', content: 'Lê Lợi và Nguyễn Trãi lãnh đạo cuộc kháng chiến 10 năm chống quân Minh, giải phóng đất nước và lập ra nhà Hậu Lê - triều đại phát triển nhất thời phong kiến.' },
+    { title: 'Đại phát kiến địa lý', content: 'Các nhà thám hiểm như Columbus, Vasco da Gama tìm ra những vùng đất mới, kết nối các châu lục và mở đầu cho thời kỳ giao thương toàn cầu.' }
+  ],
+  'Thế kỷ XVI - XVII': [
+    { title: 'Trịnh - Nguyễn phân tranh', content: 'Đất nước bị chia cắt thành Đàng Trong và Đàng Ngoài với ranh giới là sông Gianh. Tuy nhiên, đây cũng là thời kỳ mở mang bờ cõi về phía Nam.' },
+    { title: 'Cải cách tôn giáo', content: 'Tại châu Âu, phong trào cải cách tôn giáo làm thay đổi sâu sắc đời sống chính trị và xã hội, dẫn đến sự hình thành các giáo phái mới.' }
+  ],
+  'Thế kỷ XVIII - XIX': [
+    { title: 'Phong trào Tây Sơn', content: 'Anh em Tây Sơn lật đổ các tập đoàn phong kiến Trịnh - Nguyễn và đánh tan quân xâm lược Xiêm, Thanh, thống nhất đất nước.' },
+    { title: 'Cách mạng công nghiệp', content: 'Bắt đầu từ Anh, máy móc thay thế lao động thủ công, tạo nên bước nhảy vọt về năng suất và thay đổi hoàn toàn bộ mặt thế giới.' }
+  ],
+  'Thế kỷ XX': [
+    { title: 'Giải phóng dân tộc', content: 'Thế kỷ của những cuộc đấu tranh giành độc lập trên khắp thế giới. Việt Nam trở thành ngọn cờ đầu với chiến thắng Điện Biên Phủ và đại thắng mùa Xuân 1975.' },
+    { title: 'Cách mạng khoa học kỹ thuật', content: 'Con người chinh phục vũ trụ, phát minh máy tính, internet và công nghệ sinh học, đưa nhân loại bước vào kỷ nguyên văn minh mới.' }
   ]
 };
 

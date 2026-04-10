@@ -88,7 +88,7 @@ import { soundManager } from './lib/sounds';
 
 const TimelineView = ({ onStartPractice, onClose }: { onStartPractice: (category: string, periods: string[]) => void, onClose: () => void }) => {
   const [selectedEras, setSelectedEras] = useState<string[]>([]);
-  const [activeCategory, setActiveCategory] = useState<'VN' | 'World'>('VN');
+  const [activeCategory, setActiveCategory] = useState<'VN' | 'World' | 'Century'>('VN');
   const [viewingEraDocs, setViewingEraDocs] = useState<string | null>(null);
 
   const filteredEras = STORY_DATA.eras.filter(era => era.category === activeCategory);
@@ -134,6 +134,15 @@ const TimelineView = ({ onStartPractice, onClose }: { onStartPractice: (category
           )}
         >
           Lịch Sử Thế Giới
+        </button>
+        <button 
+          onClick={() => setActiveCategory('Century')}
+          className={cn(
+            "flex-1 py-4 rounded-2xl font-black uppercase tracking-widest text-xs transition-all border-2",
+            activeCategory === 'Century' ? "bg-[#FF6321] text-black border-[#FF6321]" : "bg-white/5 text-gray-500 border-white/10 hover:border-white/30"
+          )}
+        >
+          Theo Thế Kỷ
         </button>
       </div>
 
@@ -209,7 +218,9 @@ const TimelineView = ({ onStartPractice, onClose }: { onStartPractice: (category
                 </div>
                 <div>
                   <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter">{viewingEraDocs}</h2>
-                  <p className="text-[#FF6321] text-[10px] font-black uppercase tracking-widest mt-1">Tài liệu học tập • {activeCategory === 'VN' ? 'Sử Việt' : 'Sử Thế Giới'}</p>
+                  <p className="text-[#FF6321] text-[10px] font-black uppercase tracking-widest mt-1">
+                    Tài liệu học tập • {activeCategory === 'VN' ? 'Sử Việt' : activeCategory === 'World' ? 'Sử Thế Giới' : 'Sử Tổng Hợp'}
+                  </p>
                 </div>
               </div>
 
@@ -418,13 +429,31 @@ const TutorialOverlay = ({ onComplete }: { onComplete: () => void }) => {
   );
 };
 
-const WordSearchView = ({ user, addPoints, onBack }: any) => {
+const WordSearchView = ({ user, addPoints, onBack, customConfig }: any) => {
   const [grid, setGrid] = useState<string[][]>([]);
   const [wordsToFind, setWordsToFind] = useState<{ word: string, original: string, found: boolean, positions?: { r: number, c: number }[] }[]>([]);
   const [selectionStart, setSelectionStart] = useState<{ r: number, c: number } | null>(null);
   const [selectionEnd, setSelectionEnd] = useState<{ r: number, c: number } | null>(null);
   const [foundCells, setFoundCells] = useState<{ r: number, c: number }[]>([]);
   const [score, setScore] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(customConfig.duration * 60);
+
+  useEffect(() => {
+    if (timeLeft > 0) {
+      const timer = setInterval(() => {
+        setTimeLeft(prev => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            alert("Hết thời gian! Trò chơi kết thúc.");
+            onBack();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [timeLeft, onBack]);
 
   const normalize = (str: string) => {
     return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D").replace(/\s+/g, '').toUpperCase();
@@ -438,7 +467,7 @@ const WordSearchView = ({ user, addPoints, onBack }: any) => {
       "ĐINH TIÊN HOÀNG", "LÊ THÁNH TÔNG", "MINH MẠNG", "HÀM NGHI"
     ];
     
-    const selected = historicalNames.sort(() => 0.5 - Math.random()).slice(0, 6);
+    const selected = historicalNames.sort(() => 0.5 - Math.random()).slice(0, Math.min(historicalNames.length, customConfig.questionCount));
     const words = selected.map(name => ({
       word: normalize(name),
       original: name,
@@ -600,9 +629,17 @@ const WordSearchView = ({ user, addPoints, onBack }: any) => {
             <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest mt-1">Tìm tên các vị anh hùng dân tộc</p>
           </div>
         </div>
-        <div className="bg-[#1A1B1E] px-6 py-3 rounded-2xl border border-white/10">
-          <div className="text-[10px] text-gray-500 uppercase font-bold tracking-widest text-right mb-1">Điểm số</div>
-          <div className="text-[#FF6321] font-black text-2xl font-mono leading-none">{score}</div>
+        <div className="bg-[#1A1B1E] px-6 py-3 rounded-2xl border border-white/10 flex items-center gap-6">
+          <div className="text-right">
+            <div className="text-[10px] text-gray-500 uppercase font-bold tracking-widest mb-1">Thời gian</div>
+            <div className="text-white font-black text-2xl font-mono leading-none">
+              {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="text-[10px] text-gray-500 uppercase font-bold tracking-widest mb-1">Điểm số</div>
+            <div className="text-[#FF6321] font-black text-2xl font-mono leading-none">{score}</div>
+          </div>
         </div>
       </div>
 
@@ -921,51 +958,57 @@ const ArenaView = ({
   const [difficulty, setDifficulty] = useState<'Sơ' | 'Trung' | 'Cao'>('Sơ');
   const [isReverseMode, setIsReverseMode] = useState(false);
 
-  const renderVerticalTrack = () => {
-    if (gameType !== 'vs_machine' || !quizQuestions || quizQuestions.length === 0) return null;
-    const total = quizQuestions.length;
-    const showNodes = total <= 20;
+  const getTugOfWarPercent = () => {
+    const total = quizQuestions.length || characterQuizQuestions.length || epithetQuizQuestions.length || eventGuessingQuestions.length || chronologicalQuestions.length || dynastyQuestions.length || 10;
+    if (total === 0) return 50;
+    const diffNeeded = Math.max(3, Math.ceil(total / 2));
+    let percent = 50 + ((currentQuestionIndex - aiQuestionIndex) / diffNeeded) * 50;
+    return Math.max(0, Math.min(100, percent));
+  };
 
+  const renderTugOfWarBar = () => {
+    if (gameType !== 'vs_machine') return null;
+    const percent = getTugOfWarPercent();
+    
     return (
-      <div className="hidden md:flex flex-col items-center justify-between w-12 bg-[#1A1B1E] rounded-full border border-white/10 py-6 relative shrink-0" style={{ minHeight: '300px' }}>
-        <div className="absolute top-6 bottom-6 w-1 bg-white/5 rounded-full" />
-        <motion.div 
-          className="absolute top-6 w-1 bg-[#FF6321] rounded-full"
-          initial={{ height: 0 }}
-          animate={{ height: `calc(${(currentQuestionIndex / Math.max(1, total - 1)) * 100}% - 1.5rem)` }}
-        />
-        {showNodes && quizQuestions.map((_, i) => (
-          <div key={i} className="relative z-10 w-full flex justify-center items-center">
-            <div className={cn("w-2 h-2 rounded-full transition-all", i <= currentQuestionIndex ? "bg-[#FF6321]" : "bg-white/20")} />
+      <div className="w-full mb-8">
+        <div className="flex justify-between items-end mb-2 px-2">
+          <div className="flex flex-col items-start">
+            <span className="text-[10px] font-black text-[#FF6321] uppercase tracking-widest">Bạn</span>
+            <span className="text-xs text-white font-bold">{currentQuestionIndex} điểm</span>
           </div>
-        ))}
-        
-        {/* Player Icon */}
-        <motion.div 
-          animate={{ top: `calc(1.5rem + ${(currentQuestionIndex / Math.max(1, total - 1)) * 100}% - 1.5rem)` }}
-          className="absolute -left-3 z-20"
-        >
-          <div className="bg-white p-1 rounded-full shadow-lg">
-            <UserIcon size={12} className="text-[#FF6321]" />
+          <div className="flex flex-col items-end">
+            <span className="text-[10px] font-black text-purple-500 uppercase tracking-widest">Máy</span>
+            <span className="text-xs text-white font-bold">{aiQuestionIndex} điểm</span>
           </div>
-        </motion.div>
-
-        {/* AI Icon */}
-        <motion.div 
-          animate={{ top: `calc(1.5rem + ${(Math.min(aiQuestionIndex, total - 1) / Math.max(1, total - 1)) * 100}% - 1.5rem)` }}
-          className="absolute -right-3 z-20"
-        >
-          <div className="bg-purple-500 p-1 rounded-full shadow-lg">
-            <Cpu size={12} className="text-white" />
+        </div>
+        <div className="w-full h-6 bg-purple-500/20 rounded-full overflow-hidden border border-white/10 relative shadow-inner">
+          {/* AI side is the background (purple) */}
+          <div className="absolute inset-0 bg-purple-500" />
+          
+          {/* Player side (orange) covers from left to right */}
+          <motion.div 
+            initial={{ width: '50%' }}
+            animate={{ width: `${percent}%` }}
+            className="absolute top-0 bottom-0 left-0 bg-[#FF6321] shadow-[0_0_15px_#FF6321] z-10 transition-all duration-500 ease-out"
+          />
+          
+          {/* Center marker */}
+          <div className="absolute top-0 bottom-0 left-1/2 w-0.5 bg-white/50 z-20 -translate-x-1/2" />
+          
+          {/* Icons */}
+          <div className="absolute inset-0 flex justify-between items-center px-3 z-30 pointer-events-none">
+            <UserIcon size={14} className="text-white drop-shadow-md" />
+            <Cpu size={14} className="text-white drop-shadow-md" />
           </div>
-        </motion.div>
+        </div>
       </div>
     );
   };
 
   const [showDialogue, setShowDialogue] = useState(false);
   const [dialogueText, setDialogueText] = useState('');
-  const [category, setCategory] = useState<'VN' | 'World' | 'All'>('All');
+  const [category, setCategory] = useState<'VN' | 'World' | 'Century' | 'All'>('All');
   const [selectedPeriods, setSelectedPeriods] = useState<string[]>([]);
   const [usedQuestionIds, setUsedQuestionIds] = useState<Set<string>>(new Set());
   const [currentQuiz, setCurrentQuiz] = useState<QuizQuestion | null>(null);
@@ -982,6 +1025,7 @@ const ArenaView = ({
   const [chronologicalQuestions, setChronologicalQuestions] = useState<ChronologicalQuestion[]>([]);
   const [dynastyQuestions, setDynastyQuestions] = useState<DynastyQuestion[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [playerCorrectCount, setPlayerCorrectCount] = useState(0);
   const [score, setScore] = useState(0);
   const [aiHp, setAiHp] = useState(1000);
   const [aiMountainHeight, setAiMountainHeight] = useState(0);
@@ -1141,18 +1185,30 @@ const ArenaView = ({
     }
   }, [gameState, user.inventory, maxEnergy]);
 
-  // Timer for Dap Son Ha, and Battle
+  // Timer for all game modes that use timeLeft
   useEffect(() => {
-    if ((gameState === 'dap_son_ha' || gameState === 'battle') && timeLeft > 0) {
+    const timerStates = [
+      'dap_son_ha', 
+      'battle', 
+      'true_false', 
+      'fill_blank', 
+      'su_van', 
+      'event_guessing', 
+      'chronological', 
+      'dynasty',
+      'character_battle',
+      'epithet_battle',
+      'raid'
+    ];
+    
+    if (timerStates.includes(gameState) && timeLeft > 0) {
       const timer = setInterval(() => {
         setTimeLeft(prev => {
           if (prev <= 1) {
             clearInterval(timer);
             setAiSummary("Thời gian đã cạn kiệt. Trong lịch sử, nắm bắt thời cơ là yếu tố then chốt. Hãy nhanh tay hơn ở lần sau!");
             setGameState('result');
-            if (gameState === 'dap_son_ha') {
-              setBattleLog(prevLog => ['Hết thời gian! Bạn đã thất bại.', ...prevLog]);
-            }
+            setBattleLog(prevLog => ['Hết thời gian! Trận đấu đã tự động kết thúc.', ...prevLog]);
             return 0;
           }
           return prev - 1;
@@ -1254,6 +1310,7 @@ const ArenaView = ({
   });
 
   const startBattle = (diff: 'Sơ' | 'Trung' | 'Cao', configOverride?: any) => {
+    resetGame();
     if (!user.selectedGeneralId) {
       alert("Vui lòng chọn Tướng trước khi xuất trận!");
       return;
@@ -1265,23 +1322,34 @@ const ArenaView = ({
       setLastMode('battle');
       setIsReverseMode(Math.random() < 0.3); // 30% chance to be reverse mode
       setShowHint(false);
-      setScore(0);
-      setHp(100);
       setEnergy(0);
-      setSelectedAnswer(null);
       setSelectedCharAnswer(null);
       setCurrentQuestionIndex(0);
-      setIsTransitioning(false);
       
       let filteredQuiz = QUIZ_DATA;
       const cat = configOverride?.category || category;
       const pers = configOverride?.periods || selectedPeriods;
 
-      if (cat !== 'All') {
-        filteredQuiz = filteredQuiz.filter(q => q.category === cat);
-      }
-      if (pers && pers.length > 0 && !pers.includes('All')) {
-        filteredQuiz = filteredQuiz.filter(q => pers.includes(q.period));
+      if (cat === 'Century') {
+        filteredQuiz = QUIZ_DATA.filter(q => {
+          if (!q.century) return false;
+          return pers.some(p => {
+            if (p === 'Thế kỷ X - XI') return q.century === 10 || q.century === 11;
+            if (p === 'Thế kỷ XII - XIII') return q.century === 12 || q.century === 13;
+            if (p === 'Thế kỷ XIV - XV') return q.century === 14 || q.century === 15;
+            if (p === 'Thế kỷ XVI - XVII') return q.century === 16 || q.century === 17;
+            if (p === 'Thế kỷ XVIII - XIX') return q.century === 18 || q.century === 19;
+            if (p === 'Thế kỷ XX') return q.century === 20;
+            return false;
+          });
+        });
+      } else {
+        if (cat !== 'All') {
+          filteredQuiz = filteredQuiz.filter(q => q.category === cat);
+        }
+        if (pers && pers.length > 0 && !pers.includes('All')) {
+          filteredQuiz = filteredQuiz.filter(q => pers.includes(q.period));
+        }
       }
 
       // Avoid repetition: filter out used questions if possible
@@ -1337,15 +1405,53 @@ const ArenaView = ({
   }, [gameState, score, consumeBuffs]);
 
   // Global AI Logic for Vs Machine modes
+  // Master AI Logic for all vs_machine modes
   useEffect(() => {
-    let interval: any;
-    const machineModes = ['battle', 'character_battle', 'epithet_battle', 'true_false', 'fill_blank', 'dap_son_ha', 'ranked_battle'];
-    if (gameState && machineModes.includes(gameState) && gameType === 'vs_machine' && !isTransitioning) {
-      if (gameState === 'dap_son_ha' && isAiStunned) return;
+    let timeout: any;
+    const machineModes = ['battle', 'character_battle', 'epithet_battle', 'true_false', 'fill_blank', 'dap_son_ha', 'ranked_battle', 'event_guessing', 'chronological', 'dynasty', 'word_search', 'raid', 'su_van'];
+    
+    const runAiTurn = () => {
+      if (!gameState || !machineModes.includes(gameState) || gameType !== 'vs_machine' || isTransitioning) return;
       
-      interval = setInterval(() => {
-        if (Math.random() < 0.12) { // 12% chance to progress every 2.5s
-          const target = gameState === 'dap_son_ha' ? 15 : 10;
+      // AI Stunned logic for Dap Son Ha
+      if (gameState === 'dap_son_ha' && isAiStunned) {
+        timeout = setTimeout(runAiTurn, 1000);
+        return;
+      }
+
+      // 1. Calculate AI Stats based on Difficulty
+      // Easy: 2.5-5s delay, 45% success
+      // Medium: 1.5-3.5s delay, 75% success
+      // Hard: 0.5-1.5s delay, 95% success
+      let minDelay = 2500;
+      let maxDelay = 5000;
+      let successChance = 0.45;
+      let actionChance = 0.05; // Chance to use skills/items in Dap Son Ha
+
+      if (difficulty === 'Trung') {
+        minDelay = 1500;
+        maxDelay = 3500;
+        successChance = 0.75;
+        actionChance = 0.12;
+      } else if (difficulty === 'Cao') {
+        minDelay = 500;
+        maxDelay = 1500;
+        successChance = 0.95;
+        actionChance = 0.22;
+      }
+
+      const delay = Math.random() * (maxDelay - minDelay) + minDelay;
+
+      timeout = setTimeout(() => {
+        // Re-check conditions after delay
+        if (!gameState || !machineModes.includes(gameState) || gameType !== 'vs_machine' || isTransitioning) return;
+
+        // A. Progress Logic (The "Race")
+        if (Math.random() < successChance) {
+          let target = quizQuestions.length;
+          if (gameState === 'dap_son_ha') target = targetHeight;
+          else if (gameState === 'character_battle') target = characterQuizQuestions.length;
+          else if (gameState === 'epithet_battle') target = epithetQuizQuestions.length;
           
           if (gameState === 'dap_son_ha') {
             setAiMountainHeight(prev => {
@@ -1369,12 +1475,61 @@ const ArenaView = ({
             });
           }
         }
-      }, 2500);
+
+        // B. Special Actions (Dap Son Ha specific)
+        if (gameState === 'dap_son_ha' && Math.random() < actionChance) {
+          const action = Math.random();
+          if (action < 0.6) { // Attack
+            if (dapSonHaShield) {
+              setDapSonHaShield(false);
+              setBattleLog(prev => ['AI CÔNG: Phá vỡ giáp của bạn!', ...prev]);
+            } else {
+              setMountainHeight(prev => Math.max(0, prev - 1));
+              setBattleLog(prev => ['AI CÔNG: Bạn bị tụt 1 bậc!', ...prev]);
+            }
+          } else { // Defend
+            setOpponentShield(true);
+            setBattleLog(prev => ['AI THỦ: Tạo lá chắn bảo vệ!', ...prev]);
+          }
+        }
+
+        // Schedule next turn
+        runAiTurn();
+      }, delay);
+    };
+
+    if (gameState && machineModes.includes(gameState) && gameType === 'vs_machine') {
+      runAiTurn();
     }
-    return () => clearInterval(interval);
-  }, [gameState, gameType, isTransitioning, speedConfig.questionCount, isAiStunned]);
+
+    return () => clearTimeout(timeout);
+  }, [gameState, gameType, isTransitioning, quizQuestions.length, isAiStunned, difficulty, dapSonHaShield]);
+
+  const resetGame = () => {
+    setQuizQuestions([]);
+    setCharacterQuizQuestions([]);
+    setEpithetQuizQuestions([]);
+    setEventGuessingQuestions([]);
+    setChronologicalQuestions([]);
+    setDynastyQuestions([]);
+    setScore(0);
+    setPlayerCorrectCount(0);
+    setAiQuestionIndex(0);
+    setAiMountainHeight(0);
+    setMountainHeight(0);
+    setAiHp(100);
+    setHp(100);
+    setAiSummary("");
+    setBattleLog([]);
+    setAiSelectedAnswer(null);
+    setSelectedAnswer(null);
+    setIsTransitioning(false);
+    setRankedCorrectAnswers(0);
+    // Note: TimeLeft is usually set by the start function itself
+  };
 
   const startRankedBattle = (mode: 'solo' | 'machine' | 'pvp') => {
+    resetGame();
     if (!user.selectedGeneralId) {
       alert("Vui lòng chọn Tướng trước khi xuất trận!");
       return;
@@ -1396,7 +1551,7 @@ const ArenaView = ({
       setRankedTimeLeft(600); // 10 minutes
       setRankedCorrectAnswers(0);
       
-      const selectedQuestions = [...QUIZ_DATA].sort(() => 0.5 - Math.random()).slice(0, 10).map(q => {
+      const selectedQuestions = [...QUIZ_DATA].sort(() => 0.5 - Math.random()).slice(0, customConfig.questionCount).map(q => {
         const originalCorrectAnswer = typeof q.correctAnswer === 'number' ? q.options[q.correctAnswer] : q.correctAnswer;
         const shuffledOptions = q.options ? [...q.options].sort(() => 0.5 - Math.random()) : [];
         const newCorrectAnswer = typeof q.correctAnswer === 'number' ? shuffledOptions.indexOf(originalCorrectAnswer as string) : q.correctAnswer;
@@ -1464,6 +1619,7 @@ const ArenaView = ({
   };
 
   const startSuVan = () => {
+    resetGame();
     if (!user.selectedGeneralId) {
       alert("Vui lòng chọn Tướng trước khi gieo xúc xắc!");
       return;
@@ -1472,13 +1628,11 @@ const ArenaView = ({
     const executeStart = () => {
       setGameState('su_van');
       setLastMode('su_van');
-      setScore(0);
-      setHp(100);
       setEnergy(0);
       setCurrentQuestionIndex(0);
       setBattleLog(["Bắt đầu hành trình Sử Vận!", "Gieo xúc xắc để nhận thử thách..."]);
       
-      const selectedQuestions = [...QUIZ_DATA].sort(() => 0.5 - Math.random()).slice(0, 10).map(q => {
+      const selectedQuestions = [...QUIZ_DATA].sort(() => 0.5 - Math.random()).slice(0, customConfig.questionCount).map(q => {
         const originalCorrectAnswer = typeof q.correctAnswer === 'number' ? q.options[q.correctAnswer] : q.correctAnswer;
         const shuffledOptions = q.options ? [...q.options].sort(() => 0.5 - Math.random()) : [];
         const newCorrectAnswer = typeof q.correctAnswer === 'number' ? shuffledOptions.indexOf(originalCorrectAnswer as string) : q.correctAnswer;
@@ -1486,12 +1640,14 @@ const ArenaView = ({
       });
       setQuizQuestions(selectedQuestions);
       setCurrentQuiz(selectedQuestions[0]);
+      setTimeLeft(customConfig.duration * 60);
     };
 
     triggerStart('su_van', executeStart);
   };
 
   const startRaid = () => {
+    resetGame();
     if (!user.selectedGeneralId) {
       alert("Vui lòng chọn Tướng trước khi tham gia Phó Bản!");
       return;
@@ -1500,8 +1656,6 @@ const ArenaView = ({
     const executeStart = () => {
       setGameState('raid');
       setLastMode('raid');
-      setScore(0);
-      setHp(100);
       setEnergy(0);
       setCurrentQuestionIndex(0);
       setBattleLog([
@@ -1510,7 +1664,7 @@ const ArenaView = ({
         "Lưu ý: Đây là trận chiến trường kỳ, hãy cẩn trọng!"
       ]);
       
-      const selectedQuestions = [...QUIZ_DATA].sort(() => 0.5 - Math.random()).slice(0, 10).map(q => {
+      const selectedQuestions = [...QUIZ_DATA].sort(() => 0.5 - Math.random()).slice(0, customConfig.questionCount).map(q => {
         const originalCorrectAnswer = typeof q.correctAnswer === 'number' ? q.options[q.correctAnswer] : q.correctAnswer;
         const shuffledOptions = q.options ? [...q.options].sort(() => 0.5 - Math.random()) : [];
         const newCorrectAnswer = typeof q.correctAnswer === 'number' ? shuffledOptions.indexOf(originalCorrectAnswer as string) : q.correctAnswer;
@@ -1518,12 +1672,14 @@ const ArenaView = ({
       });
       setQuizQuestions(selectedQuestions);
       setCurrentQuiz(selectedQuestions[0]);
+      setTimeLeft(customConfig.duration * 60);
     };
 
     triggerStart('raid', executeStart);
   };
 
   const startTrueFalse = () => {
+    resetGame();
     const executeStart = () => {
       const filtered = QUIZ_DATA.filter(q => q.type === 'true-false');
       if (filtered.length === 0) return;
@@ -1540,6 +1696,7 @@ const ArenaView = ({
   };
 
   const startFillBlank = () => {
+    resetGame();
     const executeStart = () => {
       const filtered = QUIZ_DATA.filter(q => q.type === 'fill-blank');
       if (filtered.length === 0) return;
@@ -1556,6 +1713,7 @@ const ArenaView = ({
   };
 
   const startEventGuessing = () => {
+    resetGame();
     const executeStart = () => {
       setGameState('event_guessing');
       setLastMode('event_guessing');
@@ -1582,6 +1740,7 @@ const ArenaView = ({
     if (isCorrect) {
       soundManager.play('success');
       setScore(prev => prev + 200);
+      setPlayerCorrectCount(prev => prev + 1);
       setBattleLog(prev => [`Chính xác! ${currentEventGuessingQuiz.correctAnswer} - ${currentEventGuessingQuiz.explanation}`, ...prev]);
       addPoints(20, 'solo', true);
       addGold(100, true);
@@ -1604,6 +1763,7 @@ const ArenaView = ({
   };
 
   const startChronological = () => {
+    resetGame();
     const executeStart = () => {
       setGameState('chronological');
       setLastMode('chronological');
@@ -1624,6 +1784,7 @@ const ArenaView = ({
   };
 
   const startDynasty = () => {
+    resetGame();
     const executeStart = () => {
       setGameState('dynasty');
       setLastMode('dynasty');
@@ -1647,6 +1808,7 @@ const ArenaView = ({
     
     if (isCorrect) {
       setScore(prev => prev + 30);
+      setPlayerCorrectCount(prev => prev + 1);
       setBattleLog(prev => ['Chính xác! Bạn đã sắp xếp đúng thứ tự.', ...prev]);
       soundManager.play('success');
       addPoints(30, 'solo', true);
@@ -1680,6 +1842,7 @@ const ArenaView = ({
     const isCorrect = answer === currentDynastyQuiz.correctDynasty;
     if (isCorrect) {
       setScore(prev => prev + 10);
+      setPlayerCorrectCount(prev => prev + 1);
       setBattleLog(prev => [`Chính xác! ${currentDynastyQuiz.subject} thuộc ${answer}.`, ...prev]);
       soundManager.play('success');
       addPoints(10, 'solo', true);
@@ -1713,6 +1876,7 @@ const ArenaView = ({
 
     if (isCorrect) {
       setScore(prev => prev + 100);
+      setPlayerCorrectCount(prev => prev + 1);
       if (gameType === 'vs_machine' || gameType === 'pvp') {
         setAiHp(prev => Math.max(0, prev - 20));
       }
@@ -1745,6 +1909,7 @@ const ArenaView = ({
 
     if (isCorrect) {
       setScore(prev => prev + 100);
+      setPlayerCorrectCount(prev => prev + 1);
       if (gameType === 'vs_machine' || gameType === 'pvp') {
         setAiHp(prev => Math.max(0, prev - 20));
       }
@@ -1771,6 +1936,7 @@ const ArenaView = ({
   const targetHeight = 15;
 
   const startDapSonHa = (mode: 'solo' | 'vs_machine' | 'pvp') => {
+    resetGame();
     const executeStart = () => {
       const shuffled = [...QUIZ_DATA]
         .filter(q => q.type !== 'fill-blank')
@@ -1791,48 +1957,15 @@ const ArenaView = ({
       setDapSonHaTurnCount(0);
       setShowBuffSelection(false);
       setGameType(mode);
-      setTimeLeft(300); 
+      setTimeLeft(customConfig.duration * 60); 
       setGameState('dap_son_ha');
       setLastMode('dap_son_ha');
-      setBattleLog([`Bắt đầu Đạp Sơn Hà (${mode === 'solo' ? 'Đơn' : mode === 'vs_machine' ? 'Đấu Máy' : 'Đấu Người'})!`, 'Mỗi câu hỏi có 5 phút. Càng chậm điểm càng giảm!']);
+      setBattleLog([`Bắt đầu Đạp Sơn Hà (${mode === 'solo' ? 'Đơn' : mode === 'vs_machine' ? 'Đấu Máy' : 'Đấu Người'})!`, `Thời gian thử thách: ${customConfig.duration} phút. Càng chậm điểm càng giảm!`]);
     };
     triggerStart('dap_son_ha', executeStart);
   };
 
-  // AI Logic for Dap Son Ha
-  useEffect(() => {
-    let interval: any;
-    if (gameState === 'dap_son_ha' && gameType === 'vs_machine' && !isAiStunned) {
-      interval = setInterval(() => {
-        if (Math.random() < 0.15) { // 15% chance to climb every 3s
-          setAiMountainHeight(prev => {
-            const next = Math.min(targetHeight, prev + 1);
-            if (next >= targetHeight && gameState === 'dap_son_ha') {
-              setGameState('result');
-              setBattleLog(prevLog => ['AI đã chạm đỉnh trước! Thất bại.', ...prevLog]);
-            }
-            return next;
-          });
-        }
-        if (Math.random() < 0.1) { // 10% chance to attack/defend
-          const action = Math.random();
-          if (action < 0.5) { // Attack
-            if (dapSonHaShield) {
-              setDapSonHaShield(false);
-              setBattleLog(prev => ['AI CÔNG: Phá vỡ giáp của bạn!', ...prev]);
-            } else {
-              setMountainHeight(prev => Math.max(0, prev - 1));
-              setBattleLog(prev => ['AI CÔNG: Bạn bị tụt 1 bậc!', ...prev]);
-            }
-          } else { // Defend
-            setOpponentShield(true);
-            setBattleLog(prev => ['AI THỦ: Tạo lá chắn bảo vệ!', ...prev]);
-          }
-        }
-      }, 3000);
-    }
-    return () => clearInterval(interval);
-  }, [gameState, gameType, isAiStunned]);
+  // AI Logic for Dap Son Ha (Consolidated into Master AI Logic)
 
   const proceedToNextDapSonHa = () => {
     setSelectedAnswer(null);
@@ -1895,6 +2028,7 @@ const ArenaView = ({
       
       setMountainHeight(prev => Math.min(targetHeight, prev + moveUp));
       setScore(prev => prev + pointsEarned);
+      setPlayerCorrectCount(prev => prev + 1);
       addPoints(pointsEarned);
       addGold(Math.floor(pointsEarned / 10));
       setBattleLog(prev => [`Chính xác! +${pointsEarned} điểm. Leo lên ${moveUp} bậc.`, ...prev]);
@@ -1983,6 +2117,7 @@ const ArenaView = ({
   };
 
   const startCharacterBattle = () => {
+    resetGame();
     if (!user.selectedGeneralId) {
       alert("Vui lòng chọn Tướng trước khi xuất trận!");
       return;
@@ -1992,11 +2127,8 @@ const ArenaView = ({
       setGameState('character_battle');
       setLastMode('character_battle');
       setShowHint(false);
-      setScore(0);
-      setSelectedAnswer(null);
       setSelectedCharAnswer(null);
       setCurrentQuestionIndex(0);
-      setIsTransitioning(false);
       
       let filteredCharacterQuiz = CHARACTER_QUIZ_DATA;
       if (category !== 'All') {
@@ -2023,6 +2155,7 @@ const ArenaView = ({
   };
 
   const startEpithetBattle = () => {
+    resetGame();
     if (!user.selectedGeneralId) {
       alert("Vui lòng chọn Tướng trước khi xuất trận!");
       return;
@@ -2032,11 +2165,8 @@ const ArenaView = ({
       setGameState('epithet_battle');
       setLastMode('epithet_battle');
       setShowHint(false);
-      setScore(0);
-      setSelectedAnswer(null);
       setSelectedCharAnswer(null);
       setCurrentQuestionIndex(0);
-      setIsTransitioning(false);
       
       let filteredEpithetQuiz = EPITHET_QUIZ_DATA;
       if (category !== 'All') {
@@ -2164,6 +2294,7 @@ const ArenaView = ({
       soundManager.play('success');
       const randomPoints = Math.floor(Math.random() * 6) + 1; // 1 to 6
       setScore(s => s + randomPoints);
+      setPlayerCorrectCount(prev => prev + 1);
       setBattleLog(prev => [...prev, `CHÍNH XÁC! Bạn gieo xúc xắc được ${randomPoints} điểm.`]);
       addPoints(randomPoints, 'solo', true);
       addGold(randomPoints * 10, true);
@@ -2207,6 +2338,7 @@ const ArenaView = ({
       }
 
       setScore(s => s + damage);
+      setPlayerCorrectCount(prev => prev + 1);
       setBattleLog(prev => [...prev, isReverseMode ? `CHÍNH XÁC! Bạn đã tìm ra đáp án SAI. Gây ${damage} sát thương lên cứ điểm.` : `CHÍNH XÁC! Gây ${damage} sát thương lên cứ điểm.`]);
       addPoints(200, 'raid', true);
       addGold(100, true);
@@ -2278,6 +2410,7 @@ const ArenaView = ({
       }
       
       setScore(s => s + points);
+      setPlayerCorrectCount(prev => prev + 1);
       setBattleLog(prev => [...prev, isReverseMode ? `Chính xác! Bạn đã tìm ra đáp án SAI. Tiến lên 1 bước.` : `Chính xác! Bạn tiến lên 1 bước.`]);
       addPoints(points, 'solo', true);
       addGold(Math.floor(points / 2), true);
@@ -2355,6 +2488,7 @@ const ArenaView = ({
       }
       
       setScore(s => s + points);
+      setPlayerCorrectCount(prev => prev + 1);
       if (gameType === 'vs_machine' || gameType === 'pvp') {
         setAiHp(prev => {
           const next = Math.max(0, prev - 25);
@@ -2450,6 +2584,7 @@ const ArenaView = ({
       }
       
       setScore(s => s + points);
+      setPlayerCorrectCount(prev => prev + 1);
       if (gameType === 'vs_machine' || gameType === 'pvp') {
         setAiHp(prev => {
           const next = Math.max(0, prev - 25);
@@ -2540,37 +2675,38 @@ const ArenaView = ({
 
   return (
     <div className="pt-24 pb-24 px-4 w-full max-w-7xl mx-auto">
-      {/* Server Raid Banner */}
-      <motion.div 
-        whileHover={{ scale: 1.02 }}
-        onClick={startRaid}
-        className="bg-gradient-to-r from-[#FF6321]/20 to-transparent border border-[#FF6321]/30 rounded-2xl p-6 mb-8 flex justify-between items-center cursor-pointer group"
-      >
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <Crown size={14} className="text-[#FF6321] animate-pulse" />
-            <h4 className="text-[10px] font-bold text-[#FF6321] uppercase tracking-widest">Phó bản toàn Server</h4>
-          </div>
-          <h3 className="text-2xl font-black text-white uppercase italic group-hover:text-[#FF6321] transition-colors">Chiến dịch Điện Biên Phủ</h3>
-          <p className="text-xs text-gray-400 mt-1">Cùng cộng đồng tiêu diệt cứ điểm cuối cùng.</p>
-          <div className="flex items-center gap-4 mt-4">
-            <div className="flex-1 w-48 h-3 bg-white/10 rounded-full overflow-hidden">
-              <motion.div 
-                initial={{ width: 0 }}
-                animate={{ width: '65%' }}
-                className="h-full bg-[#FF6321] shadow-[0_0_10px_#FF6321]"
-              />
+      {gameState === 'selection' && (
+        <motion.div 
+          whileHover={{ scale: 1.02 }}
+          onClick={startRaid}
+          className="bg-gradient-to-r from-[#FF6321]/20 to-transparent border border-[#FF6321]/30 rounded-2xl p-6 mb-8 flex justify-between items-center cursor-pointer group"
+        >
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <Crown size={14} className="text-[#FF6321] animate-pulse" />
+              <h4 className="text-[10px] font-bold text-[#FF6321] uppercase tracking-widest">Phó bản toàn Server</h4>
             </div>
-            <span className="text-[10px] font-bold text-[#FF6321]">65% HP</span>
+            <h3 className="text-2xl font-black text-white uppercase italic group-hover:text-[#FF6321] transition-colors">Chiến dịch Điện Biên Phủ</h3>
+            <p className="text-xs text-gray-400 mt-1">Cùng cộng đồng tiêu diệt cứ điểm cuối cùng.</p>
+            <div className="flex items-center gap-4 mt-4">
+              <div className="flex-1 w-48 h-3 bg-white/10 rounded-full overflow-hidden">
+                <motion.div 
+                  initial={{ width: 0 }}
+                  animate={{ width: '65%' }}
+                  className="h-full bg-[#FF6321] shadow-[0_0_10px_#FF6321]"
+                />
+              </div>
+              <span className="text-[10px] font-bold text-[#FF6321]">65% HP</span>
+            </div>
           </div>
-        </div>
-        <div className="flex flex-col items-center gap-2">
-          <div className="w-12 h-12 rounded-full bg-[#FF6321] flex items-center justify-center text-black">
-            <Sword size={24} />
+          <div className="flex flex-col items-center gap-2">
+            <div className="w-12 h-12 rounded-full bg-[#FF6321] flex items-center justify-center text-black">
+              <Sword size={24} />
+            </div>
+            <span className="text-[10px] font-bold text-white uppercase tracking-tighter">Tham gia ngay</span>
           </div>
-          <span className="text-[10px] font-bold text-white uppercase tracking-tighter">Tham gia ngay</span>
-        </div>
-      </motion.div>
+        </motion.div>
+      )}
 
       {gameState === 'selection' && (
         <div className="space-y-6">
@@ -2917,6 +3053,7 @@ const ArenaView = ({
           <button 
             onClick={() => {
               soundManager.play('click');
+              resetGame();
               setGameState('selection');
             }}
             className="text-gray-500 uppercase font-bold text-xs mt-8"
@@ -2929,9 +3066,9 @@ const ArenaView = ({
       {gameState === 'battle' && currentQuiz && (
         <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-8">
           <div className="lg:col-span-8 flex flex-col md:flex-row gap-6">
-            {renderVerticalTrack()}
             <div className="bg-[#1A1B1E] border border-white/10 rounded-3xl p-6 md:p-8 relative overflow-hidden shadow-2xl flex-1 w-full">
               <div className="absolute top-0 left-0 w-1 h-full bg-[#FF6321]" />
+              {renderTugOfWarBar()}
               <div className="flex justify-between items-center mb-8">
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-3">
@@ -2947,22 +3084,6 @@ const ArenaView = ({
                       ))}
                     </div>
                   </div>
-                  {gameType === 'vs_machine' && (
-                    <div className="flex-1 h-2 bg-white/5 rounded-full overflow-hidden border border-white/5 max-w-[200px] hidden sm:block">
-                      <div className="flex h-full">
-                        <motion.div 
-                          initial={{ width: 0 }}
-                          animate={{ width: `${(currentQuestionIndex / quizQuestions.length) * 100}%` }}
-                          className="h-full bg-[#FF6321] shadow-[0_0_10px_#FF6321]"
-                        />
-                        <motion.div 
-                          initial={{ width: 0 }}
-                          animate={{ width: `${(aiQuestionIndex / 10) * 100}%` }}
-                          className="h-full bg-purple-500 opacity-50"
-                        />
-                      </div>
-                    </div>
-                  )}
                 </div>
                 <div className="relative w-16 h-16 flex items-center justify-center">
                   <svg className="w-full h-full -rotate-90">
@@ -3157,6 +3278,7 @@ const ArenaView = ({
           <div className="lg:col-span-8 space-y-8">
             <div className="bg-[#1A1B1E] border border-white/10 rounded-3xl p-8 relative overflow-hidden shadow-2xl">
               <div className="absolute top-0 left-0 w-1 h-full bg-[#FF6321]" />
+              {renderTugOfWarBar()}
               <div className="flex justify-between items-center mb-8">
                 <div className="flex items-center gap-3">
                   <span className="px-3 py-1 bg-white/5 rounded-full text-[10px] font-bold text-gray-400 uppercase tracking-widest border border-white/5">
@@ -3169,35 +3291,13 @@ const ArenaView = ({
                 </div>
               </div>
 
-              {gameType === 'vs_machine' && (
-                <div className="grid grid-cols-2 gap-6 mb-8">
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest">
-                      <span className="text-red-500 flex items-center gap-1"><Heart size={12} /> Sinh lực</span>
-                      <span className="text-white">{hp}/{maxHp}</span>
-                    </div>
-                    <div className="h-3 bg-white/5 rounded-full overflow-hidden border border-white/5 p-0.5">
-                      <motion.div 
-                        initial={{ width: 0 }}
-                        animate={{ width: `${(hp / maxHp) * 100}%` }}
-                        className="h-full bg-gradient-to-r from-red-600 to-red-400 rounded-full shadow-[0_0_15px_rgba(239,68,68,0.4)]"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest">
-                      <span className="text-purple-500 flex items-center gap-1"><Cpu size={12} /> Máy</span>
-                      <span className="text-white">{aiHp}/{maxHp}</span>
-                    </div>
-                    <div className="h-3 bg-white/5 rounded-full overflow-hidden border border-white/5 p-0.5">
-                      <motion.div 
-                        initial={{ width: 0 }}
-                        animate={{ width: `${(aiHp / maxHp) * 100}%` }}
-                        className="h-full bg-gradient-to-r from-purple-600 to-purple-400 rounded-full shadow-[0_0_15px_rgba(168,85,247,0.4)]"
-                      />
-                    </div>
-                  </div>
+              {gameType !== 'vs_machine' && (
+                <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden mb-8 border border-white/5">
+                  <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: `${((currentQuestionIndex + 1) / quizQuestions.length) * 100}%` }}
+                    className="h-full bg-[#FF6321] shadow-[0_0_10px_#FF6321]"
+                  />
                 </div>
               )}
 
@@ -3324,6 +3424,7 @@ const ArenaView = ({
           <div className="lg:col-span-8 space-y-8">
             <div className="bg-[#1A1B1E] border border-white/10 rounded-3xl p-8 relative overflow-hidden shadow-2xl">
               <div className="absolute top-0 left-0 w-1 h-full bg-[#FF6321]" />
+              {renderTugOfWarBar()}
               <div className="flex justify-between items-center mb-8">
                 <div className="flex items-center gap-3">
                   <span className="px-3 py-1 bg-white/5 rounded-full text-[10px] font-bold text-gray-400 uppercase tracking-widest border border-white/5">
@@ -3344,35 +3445,13 @@ const ArenaView = ({
                 </div>
               </div>
 
-              {gameType === 'vs_machine' && (
-                <div className="grid grid-cols-2 gap-6 mb-8">
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest">
-                      <span className="text-red-500 flex items-center gap-1"><Heart size={12} /> Sinh lực</span>
-                      <span className="text-white">{hp}/{maxHp}</span>
-                    </div>
-                    <div className="h-3 bg-white/5 rounded-full overflow-hidden border border-white/5 p-0.5">
-                      <motion.div 
-                        initial={{ width: 0 }}
-                        animate={{ width: `${(hp / maxHp) * 100}%` }}
-                        className="h-full bg-gradient-to-r from-red-600 to-red-400 rounded-full shadow-[0_0_15px_rgba(239,68,68,0.4)]"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest">
-                      <span className="text-purple-500 flex items-center gap-1"><Cpu size={12} /> Máy</span>
-                      <span className="text-white">{aiHp}/{maxHp}</span>
-                    </div>
-                    <div className="h-3 bg-white/5 rounded-full overflow-hidden border border-white/5 p-0.5">
-                      <motion.div 
-                        initial={{ width: 0 }}
-                        animate={{ width: `${(aiHp / maxHp) * 100}%` }}
-                        className="h-full bg-gradient-to-r from-purple-600 to-purple-400 rounded-full shadow-[0_0_15px_rgba(168,85,247,0.4)]"
-                      />
-                    </div>
-                  </div>
+              {gameType !== 'vs_machine' && (
+                <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden mb-8 border border-white/5">
+                  <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: `${((currentQuestionIndex + 1) / quizQuestions.length) * 100}%` }}
+                    className="h-full bg-[#FF6321] shadow-[0_0_10px_#FF6321]"
+                  />
                 </div>
               )}
 
@@ -3505,7 +3584,15 @@ const ArenaView = ({
 
 
       {gameState === 'word_search' && (
-        <WordSearchView user={user} addPoints={addPoints} onBack={() => setGameState('mode_selection')} />
+        <div className="space-y-6">
+          {renderTugOfWarBar()}
+          <WordSearchView 
+            user={user} 
+            addPoints={addPoints} 
+            onBack={() => setGameState('mode_selection')} 
+            customConfig={customConfig}
+          />
+        </div>
       )}
 
       {gameState === 'raid' && currentQuiz && (
@@ -3535,6 +3622,9 @@ const ArenaView = ({
                   <span className="px-4 py-1.5 bg-white/5 rounded-full text-[10px] font-bold text-gray-400 uppercase tracking-widest border border-white/5">
                     Câu hỏi {currentQuestionIndex + 1}/{quizQuestions.length}
                   </span>
+                  <div className="text-xl font-black text-white font-mono">
+                    {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}
+                  </div>
                   <div className="flex gap-2">
                     {[...Array(quizQuestions.length)].map((_, i) => (
                       <div key={i} className={cn(
@@ -3554,6 +3644,16 @@ const ArenaView = ({
                   CHẾ ĐỘ NGHỊCH ĐẢO: TÌM ĐÁP ÁN SAI!
                 </div>
               )}
+
+              <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden mb-8 border border-white/5">
+                <div className="flex h-full">
+                  <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: `${((currentQuestionIndex + 1) / quizQuestions.length) * 100}%` }}
+                    className="h-full bg-[#FF6321] shadow-[0_0_10px_#FF6321]"
+                  />
+                </div>
+              </div>
               
               <motion.h2 
                 key={currentQuestionIndex}
@@ -3603,6 +3703,7 @@ const ArenaView = ({
       {gameState === 'su_van' && currentQuiz && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           <div className="lg:col-span-8 space-y-8">
+            {renderTugOfWarBar()}
             <div className="flex justify-between items-center bg-[#1A1B1E] p-8 rounded-3xl border border-white/10 relative overflow-hidden shadow-xl">
               <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-transparent" />
               <div className="flex items-center gap-6 relative z-10">
@@ -3625,8 +3726,11 @@ const ArenaView = ({
               <div className="flex justify-between items-center mb-8">
                 <div className="flex items-center gap-4">
                   <span className="px-4 py-1.5 bg-white/5 rounded-full text-[10px] font-bold text-gray-400 uppercase tracking-widest border border-white/5">
-                    Câu hỏi {currentQuestionIndex + 1}/10
+                    Câu hỏi {currentQuestionIndex + 1}/{quizQuestions.length}
                   </span>
+                  <div className="text-xl font-black text-white font-mono">
+                    {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}
+                  </div>
                 </div>
                 <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest animate-pulse">
                   Đang gieo xúc xắc...
@@ -3683,6 +3787,7 @@ const ArenaView = ({
           <div className="lg:col-span-8 space-y-8">
             <div className="bg-[#1A1B1E] border border-white/10 rounded-3xl p-8 relative overflow-hidden shadow-2xl">
               <div className="absolute top-0 left-0 w-1 h-full bg-blue-500" />
+              {renderTugOfWarBar()}
               <div className="flex justify-between items-center mb-8">
                 <div className="flex items-center gap-3">
                   <span className="px-3 py-1 bg-white/5 rounded-full text-[10px] font-bold text-gray-400 uppercase tracking-widest border border-white/5">
@@ -3769,6 +3874,7 @@ const ArenaView = ({
       {gameState === 'chronological' && currentChronologicalQuiz && (
         <div className="w-full max-w-2xl mx-auto">
           <div className="bg-[#1A1B1E] border border-white/10 rounded-3xl p-8 relative overflow-hidden shadow-2xl">
+            {renderTugOfWarBar()}
             <div className="flex justify-between items-center mb-8">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-[#FF6321]/20 rounded-xl flex items-center justify-center text-[#FF6321]">
@@ -3855,6 +3961,7 @@ const ArenaView = ({
       {gameState === 'dynasty' && currentDynastyQuiz && (
         <div className="w-full max-w-2xl mx-auto">
           <div className="bg-[#1A1B1E] border border-white/10 rounded-3xl p-8 relative overflow-hidden shadow-2xl">
+            {renderTugOfWarBar()}
             <div className="flex justify-between items-center mb-8">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-[#FF6321]/20 rounded-xl flex items-center justify-center text-[#FF6321]">
@@ -3907,6 +4014,7 @@ const ArenaView = ({
           <div className="lg:col-span-8 space-y-8">
             <div className="bg-[#1A1B1E] border border-white/10 rounded-3xl p-8 relative overflow-hidden shadow-2xl">
               <div className="absolute top-0 left-0 w-1 h-full bg-[#FF6321]" />
+              {renderTugOfWarBar()}
               <div className="flex justify-between items-center mb-8">
                 <div className="flex items-center gap-3">
                   <span className="px-3 py-1 bg-white/5 rounded-full text-[10px] font-bold text-gray-400 uppercase tracking-widest border border-white/5">
@@ -3919,35 +4027,13 @@ const ArenaView = ({
                 </div>
               </div>
 
-              {gameType === 'vs_machine' && (
-                <div className="grid grid-cols-2 gap-6 mb-8">
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest">
-                      <span className="text-red-500 flex items-center gap-1"><Heart size={12} /> Sinh lực</span>
-                      <span className="text-white">{hp}/{maxHp}</span>
-                    </div>
-                    <div className="h-3 bg-white/5 rounded-full overflow-hidden border border-white/5 p-0.5">
-                      <motion.div 
-                        initial={{ width: 0 }}
-                        animate={{ width: `${(hp / maxHp) * 100}%` }}
-                        className="h-full bg-gradient-to-r from-red-600 to-red-400 rounded-full shadow-[0_0_15px_rgba(239,68,68,0.4)]"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest">
-                      <span className="text-purple-500 flex items-center gap-1"><Cpu size={12} /> Máy</span>
-                      <span className="text-white">{aiHp}/{maxHp}</span>
-                    </div>
-                    <div className="h-3 bg-white/5 rounded-full overflow-hidden border border-white/5 p-0.5">
-                      <motion.div 
-                        initial={{ width: 0 }}
-                        animate={{ width: `${(aiHp / maxHp) * 100}%` }}
-                        className="h-full bg-gradient-to-r from-purple-600 to-purple-400 rounded-full shadow-[0_0_15px_rgba(168,85,247,0.4)]"
-                      />
-                    </div>
-                  </div>
+              {gameType !== 'vs_machine' && (
+                <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden mb-8 border border-white/5">
+                  <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: `${((currentQuestionIndex + 1) / quizQuestions.length) * 100}%` }}
+                    className="h-full bg-[#FF6321] shadow-[0_0_10px_#FF6321]"
+                  />
                 </div>
               )}
 
@@ -4302,7 +4388,6 @@ const ArenaView = ({
       {gameState === 'ranked_battle' && currentQuiz && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           <div className="lg:col-span-8 flex gap-6">
-            {renderVerticalTrack()}
             <div className="flex-1 space-y-8">
               <div className="flex justify-between items-center bg-[#1A1B1E] p-8 rounded-3xl border border-[#FF6321]/30 relative overflow-hidden shadow-xl">
                 <div className="absolute top-0 right-0 p-3 bg-[#FF6321] text-black text-[10px] font-black uppercase tracking-widest rounded-bl-2xl">Ranked Match</div>
@@ -4334,6 +4419,7 @@ const ArenaView = ({
               <div className="bg-[#1A1B1E] p-10 rounded-[3rem] border border-white/10 relative overflow-hidden shadow-2xl">
               <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-[#FF6321]/5 to-transparent pointer-events-none" />
               <div className="relative z-10">
+                {renderTugOfWarBar()}
                 <div className="flex justify-between items-center mb-10">
                   <span className="px-5 py-1.5 bg-white/5 rounded-full text-[10px] font-bold text-gray-400 uppercase tracking-widest border border-white/10">{currentQuiz.period}</span>
                   <div className="flex items-center gap-3">
@@ -4341,6 +4427,17 @@ const ArenaView = ({
                     <span className="text-lg font-mono font-bold text-white">{energy}/{maxEnergy}</span>
                   </div>
                 </div>
+
+                {gameType !== 'vs_machine' && (
+                  <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden mb-8 border border-white/5">
+                    <motion.div 
+                      initial={{ width: 0 }}
+                      animate={{ width: `${((currentQuestionIndex + 1) / quizQuestions.length) * 100}%` }}
+                      className="h-full bg-[#FF6321] shadow-[0_0_10px_#FF6321]"
+                    />
+                  </div>
+                )}
+
                 <h3 className="text-2xl md:text-3xl font-bold text-white mb-10 leading-tight min-h-[4rem]">{currentQuiz.question}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {currentQuiz.options?.map((option, i) => (
@@ -4556,9 +4653,9 @@ const ArenaView = ({
             </div>
             <div className="bg-[#1A1B1E] p-6 rounded-3xl border border-white/10">
               <p className="text-3xl font-black text-blue-400 font-mono leading-none">
-                {hp}%
+                {playerCorrectCount}
               </p>
-              <p className="text-[8px] text-gray-500 uppercase font-bold tracking-widest mt-2">Sinh lực còn</p>
+              <p className="text-[8px] text-gray-500 uppercase font-bold tracking-widest mt-2">Câu đúng</p>
             </div>
           </div>
 
@@ -4601,7 +4698,10 @@ const ArenaView = ({
             <motion.button 
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => setGameState('mode_selection')}
+              onClick={() => {
+                resetGame();
+                setGameState('mode_selection');
+              }}
               className="w-full bg-white/5 text-white font-bold uppercase tracking-widest py-5 rounded-2xl hover:bg-white/10 transition-all border border-white/10"
             >
               Về Sảnh Chờ
